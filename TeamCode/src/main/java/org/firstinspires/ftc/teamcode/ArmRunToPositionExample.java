@@ -27,7 +27,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.robotcontroller.external.samples;
+package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -50,15 +50,16 @@ import com.qualcomm.robotcore.util.Range;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-@TeleOp(name="Basic: Iterative OpMode", group="Iterative OpMode")
-@Disabled
-public class BasicOpMode_Iterative extends OpMode
+@TeleOp(name="Run to Position with arm", group="Iterative OpMode")
+
+public class ArmRunToPositionExample extends OpMode
 {
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor leftDrive = null;
     private DcMotor rightDrive = null;
-    private  DcMotor arm =  null;
+    private  DcMotor arm = null;
+    private  int bottomPosition=0;
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -73,6 +74,9 @@ public class BasicOpMode_Iterative extends OpMode
         leftDrive  = hardwareMap.get(DcMotor.class, "left_drive");
         rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
         arm = hardwareMap.get(DcMotor.class, "arm");
+        bottomPosition=arm.getCurrentPosition();
+        arm.setTargetPosition(bottomPosition);
+        arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // Pushing the left stick forward MUST make robot go forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
@@ -123,8 +127,39 @@ public class BasicOpMode_Iterative extends OpMode
         // rightPower = -gamepad1.right_stick_y ;
 
         // Send calculated power to wheels
-        leftDrive.setPower(leftPower);
-        rightDrive.setPower(rightPower);
+
+
+        //this if statement moves the arm up a little
+        if(gamepad1.right_bumper){
+            arm.setTargetPosition(arm.getCurrentPosition()+3);
+        }
+        //this if statement moves the arm down a little
+        if (gamepad1.left_bumper){
+            arm.setTargetPosition(arm.getCurrentPosition()-3);
+        }
+        //this if statement checks to make sure you did not set the arm below the bottom positions and
+        //resets the target to the bottom position if did
+        if(arm.getTargetPosition()<bottomPosition){
+            arm.setTargetPosition(bottomPosition);
+        }
+        // THis if statement checks to see if you have set your arm above the top position(200 units
+        //above the bottom) if oyu have it resets the arm to the bottom position
+        if(arm.getTargetPosition()>bottomPosition+200){
+            arm.setTargetPosition(bottomPosition+200);
+        }
+
+        if(gamepad1.a && gamepad1.dpad_down){
+            bottomPosition-=2;
+        }
+        if(gamepad1.a && gamepad1.dpad_up){
+            bottomPosition+=2;
+        }
+
+        //if(press some button){
+        //set the arm to the top}
+
+        arm.setPower(.4);
+        arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // Show the elapsed game time and wheel power.
         telemetry.addData("Status", "Run Time: " + runtime.toString());
