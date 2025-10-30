@@ -73,7 +73,7 @@ public class SundayTeleop extends OpMode {
      * velocity. Here we are setting the target, and minimum velocity that the launcher should run
      * at. The minimum velocity is a threshold for determining when to fire.
      */
-    final double LAUNCHER_TARGET_VELOCITY = -1125;
+    private double LAUNCHER_TARGET_VELOCITY = -2000;
     final double LAUNCHER_MIN_VELOCITY = -1075;
 
     // Declare OpMode members.
@@ -210,6 +210,12 @@ public class SundayTeleop extends OpMode {
          */
         arcadeDrive(-gamepad1.left_stick_y, gamepad1.right_stick_x);
 
+        if(gamepad1.right_bumper){
+            LAUNCHER_TARGET_VELOCITY+=25;
+        }
+        if(gamepad1.left_bumper) {
+            LAUNCHER_TARGET_VELOCITY -= 30;
+        }
         /*
          * Here we give the user control of the speed of the launcher motor without automatically
          * queuing a shot.
