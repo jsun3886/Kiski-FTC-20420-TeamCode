@@ -34,6 +34,8 @@ package org.firstinspires.ftc.teamcode;
 
 import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
 
+import static java.lang.Math.abs;
+
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -79,8 +81,8 @@ public class StarterBotTeleopMecanums extends OpMode {
      * velocity. Here we are setting the target, and minimum velocity that the launcher should run
      * at. The minimum velocity is a threshold for determining when to fire.
      */
-    final double LAUNCHER_TARGET_VELOCITY = 1125;
-    final double LAUNCHER_MIN_VELOCITY = 1075;
+    private double LAUNCHER_TARGET_VELOCITY = 1125;
+
 
     // Declare OpMode members.
     private DcMotor leftFrontDrive = null;
@@ -234,7 +236,7 @@ public class StarterBotTeleopMecanums extends OpMode {
          * Here we give the user control of the speed of the launcher motor without automatically
          * queuing a shot.
          */
-        if (gamepad1.b){
+        if (gamepad1.y){
             Intake.setPower(1);
         }
 
@@ -242,11 +244,26 @@ public class StarterBotTeleopMecanums extends OpMode {
             Intake.setPower(-1);
         }
 
-        if (gamepad1.y){
+        if (gamepad1.b){
             Intake.setPower(0);
         }
 
-        if (gamepad2.y) {
+        // can decrease the launcher speed to a minimum
+        if (gamepad1.dpad_down){
+            LAUNCHER_TARGET_VELOCITY-=10;
+            if( LAUNCHER_TARGET_VELOCITY<1000) {
+                LAUNCHER_TARGET_VELOCITY = 1000;
+            }
+            launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
+        }
+
+
+        //can increase the launcher speed
+        if (gamepad1.dpad_up) {
+            LAUNCHER_TARGET_VELOCITY+=10;
+            if(LAUNCHER_TARGET_VELOCITY>2400){
+                LAUNCHER_TARGET_VELOCITY=2400;
+            }
             launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
         } else if (gamepad2.b) { // stop flywheel
             launcher.setVelocity(STOP_SPEED);
@@ -262,7 +279,7 @@ public class StarterBotTeleopMecanums extends OpMode {
          */
         telemetry.addData("State", launchState);
         telemetry.addData("motorSpeed", launcher.getVelocity());
-telemetryAprilTag();
+        telemetryAprilTag();
     }// end of loop method
 
     /*
@@ -278,7 +295,7 @@ telemetryAprilTag();
          * This ensures all the powers maintain the same ratio,
          * but only if at least one is out of the range [-1, 1]
          */
-        double denominator = Math.max(Math.abs(forward) + Math.abs(strafe) + Math.abs(rotate), 1);
+        double denominator = Math.max(abs(forward) + abs(strafe) + abs(rotate), 1);
 
         leftFrontPower = (forward + strafe + rotate) / denominator;
         rightFrontPower = (forward - strafe - rotate) / denominator;
@@ -301,7 +318,7 @@ telemetryAprilTag();
                 break;
             case SPIN_UP:
                 launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
-                if (launcher.getVelocity() > LAUNCHER_MIN_VELOCITY) {
+                if (abs(launcher.getVelocity() -LAUNCHER_TARGET_VELOCITY)<50) {
                     launchState = LaunchState.LAUNCH;
                 }
                 break;
@@ -353,6 +370,9 @@ telemetryAprilTag();
                 telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
             }
         }   // end for() loop
+
+        //add code here to compare distance and current Target velocity and adjust target velocity
+        //if necessary
 
         // Add "key" information to telemetry
         telemetry.addLine("\nkey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");

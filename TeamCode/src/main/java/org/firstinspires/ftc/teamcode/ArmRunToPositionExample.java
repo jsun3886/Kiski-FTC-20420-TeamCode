@@ -129,6 +129,7 @@ public class ArmRunToPositionExample extends OpMode
         // Send calculated power to wheels
 
 
+
         //this if statement moves the arm up a little
         if(gamepad1.right_bumper){
             arm.setTargetPosition(arm.getCurrentPosition()+3);
