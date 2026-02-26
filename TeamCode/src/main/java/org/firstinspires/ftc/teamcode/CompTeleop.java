@@ -38,10 +38,8 @@ import static java.lang.Math.abs;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -72,7 +70,7 @@ import java.util.List;
 
 @TeleOp(name = "compTeleop", group = "StarterBot")
 //@Disabled
-public class StarterBotTeleopMecanums extends OpMode {
+public class CompTeleop extends OpMode {
     final double FEED_TIME_SECONDS = 0.20; //The feeder servos run this long when a shot is requested.
     final double STOP_SPEED = 0.0; //We send this power to the servos when we want them to stop.
     final double FULL_SPEED = 1.0;
@@ -346,6 +344,7 @@ public class StarterBotTeleopMecanums extends OpMode {
 
     }
 
+    ElapsedTime tiemr = new ElapsedTime();
     void launch(boolean shotRequested) {
         switch (launchState) {
             case IDLE:
