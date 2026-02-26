@@ -43,7 +43,9 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -68,7 +70,7 @@ import java.util.List;
  * we will also need to adjust the "PIDF" coefficients with some that are a better fit for our application.
  */
 
-@TeleOp(name = "StarterBotTeleopMecanums", group = "StarterBot")
+@TeleOp(name = "compTeleop", group = "StarterBot")
 //@Disabled
 public class StarterBotTeleopMecanums extends OpMode {
     final double FEED_TIME_SECONDS = 0.20; //The feeder servos run this long when a shot is requested.
@@ -90,9 +92,9 @@ public class StarterBotTeleopMecanums extends OpMode {
     private DcMotor leftBackDrive = null;
     private DcMotor rightBackDrive = null;
     private DcMotorEx launcher = null;
-    private CRServo leftFeeder = null;
-    private CRServo rightFeeder = null;
-    private DcMotor Intake = null;
+    private DcMotor Sorter = null;
+    private Servo OpenClose = null;
+
     ElapsedTime feederTimer = new ElapsedTime();
     private AprilTagProcessor aprilTag;
     private VisionPortal visionPortal;
@@ -145,10 +147,10 @@ public class StarterBotTeleopMecanums extends OpMode {
         leftBackDrive = hardwareMap.get(DcMotor.class, "leftBack");
         rightBackDrive = hardwareMap.get(DcMotor.class, "rightBack");
         launcher = hardwareMap.get(DcMotorEx.class, "launcher");
-        leftFeeder = hardwareMap.get(CRServo.class, "left_feeder");
-        rightFeeder = hardwareMap.get(CRServo.class, "right_feeder");
+        Sorter = hardwareMap.get(DcMotor.class,"Sorter");
+        OpenClose = hardwareMap.get(Servo.class, "OpenClose");
 
-        Intake = hardwareMap.get(DcMotor.class,"intake");
+
 
         /*
          * To drive forward, most robots need the motor on one side to be reversed,
@@ -157,7 +159,7 @@ public class StarterBotTeleopMecanums extends OpMode {
          * Note: The settings here assume direct drive on left and right wheels. Gear
          * Reduction or 90 Deg drives may require direction flips
          */
-        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+        leftFrontDrive.setDirection(DcMotor.Direction.FORWARD);
         rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
@@ -185,8 +187,6 @@ public class StarterBotTeleopMecanums extends OpMode {
         /*
          * set Feeders to an initial value to initialize the servo controller
          */
-        leftFeeder.setPower(STOP_SPEED);
-        rightFeeder.setPower(STOP_SPEED);
 
         launcher.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(300, 0, 0, 10));
 
@@ -194,7 +194,7 @@ public class StarterBotTeleopMecanums extends OpMode {
          * Much like our drivetrain motors, we set the left feeder servo to reverse so that they
          * both work to feed the ball into the robot.
          */
-        leftFeeder.setDirection(DcMotorSimple.Direction.REVERSE);
+        //leftFeeder.setDirection(DcMotorSimple.Direction.REVERSE);
 
         /*
          * Tell the driver that initialization is complete.
@@ -212,9 +212,12 @@ public class StarterBotTeleopMecanums extends OpMode {
     /*
      * Code to run ONCE when the driver hits START
      */
+
+    ElapsedTime timer = new ElapsedTime();
+
     @Override
-    public void start() {
-    }
+    public void start( ) {}
+
 
     /*
      * Code to run REPEATEDLY after the driver hits START but before they hit STOP
@@ -236,20 +239,19 @@ public class StarterBotTeleopMecanums extends OpMode {
          * Here we give the user control of the speed of the launcher motor without automatically
          * queuing a shot.
          */
-        if (gamepad1.y){
-            Intake.setPower(1);
-        }
 
-        if(gamepad1.a){
-            Intake.setPower(-1);
-        }
 
         if (gamepad1.b){
-            Intake.setPower(0);
+            launcher.setPower(.9);
         }
 
-        // can decrease the launcher speed to a minimum
-        if (gamepad1.dpad_down){
+
+        if (gamepad1.y){
+            launcher.setPower(0);
+        }
+
+
+        if (gamepad1.left_bumper){
             LAUNCHER_TARGET_VELOCITY-=10;
             if( LAUNCHER_TARGET_VELOCITY<1000) {
                 LAUNCHER_TARGET_VELOCITY = 1000;
@@ -258,16 +260,51 @@ public class StarterBotTeleopMecanums extends OpMode {
         }
 
 
-        //can increase the launcher speed
-        if (gamepad1.dpad_up) {
+        if(gamepad1.right_bumper){
             LAUNCHER_TARGET_VELOCITY+=10;
             if(LAUNCHER_TARGET_VELOCITY>2400){
                 LAUNCHER_TARGET_VELOCITY=2400;
             }
             launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
-        } else if (gamepad2.b) { // stop flywheel
-            launcher.setVelocity(STOP_SPEED);
+        } else if (gamepad1.b) { // stop flywheel
+            //  launcher.setVelocity(STOP_SPEED);
         }
+
+
+
+
+
+
+
+
+        if(gamepad2.x){
+            Sorter.setPower (-.2);
+        }
+
+
+        if(gamepad2.b){
+            Sorter.setPower (.2);
+        }
+
+
+        if(gamepad2.a){
+            Sorter.setPower(0);
+        }
+
+
+        if(gamepad2.dpad_left){
+            OpenClose.setPosition(.6);
+        }
+
+
+
+
+        if(gamepad2.dpad_down){
+            OpenClose.setPosition(.5);
+        }
+
+
+
 
         /*
          * Now we call our "Launch" function.
@@ -305,7 +342,7 @@ public class StarterBotTeleopMecanums extends OpMode {
         leftFrontDrive.setPower(leftFrontPower);
         rightFrontDrive.setPower(rightFrontPower);
         leftBackDrive.setPower(leftBackPower);
-        rightBackDrive.setPower(rightBackPower);
+        rightBackDrive.setPower(rightBackPower*1.2);
 
     }
 
@@ -323,16 +360,16 @@ public class StarterBotTeleopMecanums extends OpMode {
                 }
                 break;
             case LAUNCH:
-                leftFeeder.setPower(FULL_SPEED);
-                rightFeeder.setPower(FULL_SPEED);
+                //leftFeeder.setPower(FULL_SPEED);
+                //rightFeeder.setPower(FULL_SPEED);
                 feederTimer.reset();
                 launchState = LaunchState.LAUNCHING;
                 break;
             case LAUNCHING:
                 if (feederTimer.seconds() > FEED_TIME_SECONDS) {
                     launchState = LaunchState.IDLE;
-                    leftFeeder.setPower(STOP_SPEED);
-                    rightFeeder.setPower(STOP_SPEED);
+                    //leftFeeder.setPower(STOP_SPEED);
+                    //rightFeeder.setPower(STOP_SPEED);
                 }
                 break;
         }
@@ -381,4 +418,3 @@ public class StarterBotTeleopMecanums extends OpMode {
 
     }   // end method telemetryAprilTag()
 }// end of class
-
