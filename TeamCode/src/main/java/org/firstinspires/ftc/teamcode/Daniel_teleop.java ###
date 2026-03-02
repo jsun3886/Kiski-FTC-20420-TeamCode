@@ -314,6 +314,8 @@ public class CompTeleop extends OpMode {
          */
         telemetry.addData("State", launchState);
         telemetry.addData("motorSpeed", launcher.getVelocity());
+        telemetry.addData("It's Green", BallColor.GREEN());
+        telemetry.addData("It's Purple", BallColor.PURPLE());
         telemetryAprilTag();
     }// end of loop method
 
@@ -417,3 +419,164 @@ public class CompTeleop extends OpMode {
 
     }   // end method telemetryAprilTag()
 }// end of class
+
+###### color sensor
+
+import com.qualcomm.robotcore.hardware.ColorSensor;
+
+@TeleOp(name = "CompTeleopColorSort", group = "StarterBot")
+public class CompTeleopColorSort extends OpMode {
+
+    // Drive motors
+    private DcMotor leftFrontDrive;
+    private DcMotor rightFrontDrive;
+    private DcMotor leftBackDrive;
+    private DcMotor rightBackDrive;
+
+    // Mechanisms
+    private DcMotorEx launcher;
+    private DcMotor Sorter;
+    private Servo OpenClose;
+
+    // Color sensor
+    private ColorSensor ballColor;
+
+    // Ball color enum
+    enum BallColor {
+        GREEN,
+        PURPLE,
+        UNKNOWN
+    }
+
+    // Required sequence: Green → Purple → Green → Purple
+    BallColor[] targetSequence = {
+            BallColor.GREEN,
+            BallColor.PURPLE,
+            BallColor.GREEN,
+            BallColor.PURPLE
+    };
+
+    int currentTargetIndex = 0;
+
+    // Drive power variables
+    double leftFrontPower;
+    double rightFrontPower;
+    double leftBackPower;
+    double rightBackPower;
+
+    @Override
+    public void init() {
+
+        leftFrontDrive = hardwareMap.get(DcMotor.class, "leftFront");
+        rightFrontDrive = hardwareMap.get(DcMotor.class, "rightFront");
+        leftBackDrive = hardwareMap.get(DcMotor.class, "leftBack");
+        rightBackDrive = hardwareMap.get(DcMotor.class, "rightBack");
+
+        launcher = hardwareMap.get(DcMotorEx.class, "launcher");
+        Sorter = hardwareMap.get(DcMotor.class, "Sorter");
+        OpenClose = hardwareMap.get(Servo.class, "OpenClose");
+
+        ballColor = hardwareMap.get(ColorSensor.class, "ballColor");
+
+        leftFrontDrive.setDirection(DcMotor.Direction.FORWARD);
+        rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
+        leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
+        rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
+
+        leftFrontDrive.setZeroPowerBehavior(BRAKE);
+        rightFrontDrive.setZeroPowerBehavior(BRAKE);
+        leftBackDrive.setZeroPowerBehavior(BRAKE);
+        rightBackDrive.setZeroPowerBehavior(BRAKE);
+
+        telemetry.addData("Status", "Initialized");
+    }
+
+    @Override
+    public void loop() {
+
+        // Drive control
+        mecanumDrive(-gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
+
+        // Sorter manual control
+        if (gamepad2.x) {
+            Sorter.setPower(-0.2);
+        }
+        else if (gamepad2.b) {
+            Sorter.setPower(0.2);
+        }
+        else if (gamepad2.a) {
+            Sorter.setPower(0);
+        }
+
+        // Run automatic gate logic
+        processBallGate();
+
+        telemetry.addData("Detected Color", detectBallColor());
+        telemetry.addData("Sequence Step", currentTargetIndex);
+    }
+
+    // MECANUM DRIVE
+    void mecanumDrive(double forward, double strafe, double rotate) {
+
+        double denominator = Math.max(abs(forward) + abs(strafe) + abs(rotate), 1);
+
+        leftFrontPower = (forward + strafe + rotate) / denominator;
+        rightFrontPower = (forward - strafe - rotate) / denominator;
+        leftBackPower = (forward - strafe + rotate) / denominator;
+        rightBackPower = (forward + strafe - rotate) / denominator;
+
+        leftFrontDrive.setPower(leftFrontPower);
+        rightFrontDrive.setPower(rightFrontPower);
+        leftBackDrive.setPower(leftBackPower);
+        rightBackDrive.setPower(rightBackPower);
+    }
+
+    // DETECT BALL COLOR
+    BallColor detectBallColor() {
+
+        int r = ballColor.red();
+        int g = ballColor.green();
+        int b = ballColor.blue();
+
+        if (g > r && g > b) {
+            return BallColor.GREEN;
+            
+        }
+
+        if (r > g && b > g) {
+            return BallColor.PURPLE;
+        }
+
+        return BallColor.UNKNOWN;
+    }
+
+    // CONTROL GATE BASED ON SEQUENCE
+    void processBallGate() {
+
+        BallColor detected = detectBallColor();
+
+        if (currentTargetIndex >= targetSequence.length) {
+            return;
+        }
+
+        BallColor required = targetSequence[currentTargetIndex];
+
+        if (detected == required) {
+            
+}
+            // Open gate
+            OpenClose.setPosition(0.6);
+            Thread.sleep(3000); // wait 3000 ms = 3 seconds
+            telemetry.addData("Ball Accepted", detected);
+            currentTargetIndex++;
+
+        } else {
+
+            // Keep gate closed
+            OpenClose.setPosition(0.5);
+
+            telemetry.addData("Ball Rejected", detected);
+        }
+    }
+}
+
