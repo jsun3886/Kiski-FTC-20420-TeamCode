@@ -534,21 +534,20 @@ public class CompTeleopColorSort extends OpMode {
     // DETECT BALL COLOR
     BallColor detectBallColor() {
 
-        int r = ballColor.red();
-        int g = ballColor.green();
-        int b = ballColor.blue();
+    int r = ballColor.red();
+    int g = ballColor.green();
+    int b = ballColor.blue();
 
-        if (g > r && g > b) {
-            return BallColor.GREEN;
-            
-        }
-
-        if (r > g && b > g) {
-            return BallColor.PURPLE;
-        }
-
-        return BallColor.UNKNOWN;
+    if (g > r && g > b) {
+        return BallColor.GREEN;
     }
+
+    if (r > 80 && b > 80) {
+        return BallColor.PURPLE;
+    }
+
+    return BallColor.UNKNOWN;
+}
 
     // CONTROL GATE BASED ON SEQUENCE
     void processBallGate() {
@@ -563,20 +562,24 @@ public class CompTeleopColorSort extends OpMode {
 
         if (detected == required) {
             
-}
             // Open gate
             OpenClose.setPosition(0.6);
-            Thread.sleep(3000); // wait 3000 ms = 3 seconds
+            
             telemetry.addData("Ball Accepted", detected);
             currentTargetIndex++;
-
-        } else {
+        }
+        else {
 
             // Keep gate closed
             OpenClose.setPosition(0.5);
 
             telemetry.addData("Ball Rejected", detected);
         }
+        boolean ballProcessed = false;
+        if (detected correct AND ballProcessed == false) && (distanceSensor.getDistance(DistanceUnit.CM) < 4) {
+        boolean ballProcessed = True;
+        }
+        
     }
 }
 
