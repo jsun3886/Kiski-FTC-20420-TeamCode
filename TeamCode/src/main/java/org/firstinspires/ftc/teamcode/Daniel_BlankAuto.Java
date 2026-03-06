@@ -83,7 +83,7 @@ public class BlankAuto extends OpMode
      * velocity. Here we are setting the target and minimum velocity that the launcher should run
      * at. The minimum velocity is a threshold for determining when to fire.
      */
-    final double LAUNCHER_TARGET_VELOCITY = 1125;
+    final double LAUNCHER_TARGET_VELOCITY = 3025;
     final double LAUNCHER_MIN_VELOCITY = 1075;
 
     /*
@@ -259,14 +259,11 @@ public class BlankAuto extends OpMode
 
 
             case FORWARD:
-                mecanumDrive(.2,0,0);
+                mecanumDrive(.2,0,.2);
                 if(mainTimer.milliseconds()>3000){
                     autonomousState=AutonomousState.COMPLETE;
                 }
-                break;
-
-
-
+           
 
 
             case LAUNCH:
