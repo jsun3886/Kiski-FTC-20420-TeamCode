@@ -342,7 +342,7 @@ public class CompTeleop extends OpMode {
         leftBackDrive.setPower(leftBackPower);
         rightBackDrive.setPower(rightBackPower*1.2);
 
-    }
+    }// end of mecanumDrive
 
     ElapsedTime tiemr = new ElapsedTime();
     void launch(boolean shotRequested) {
