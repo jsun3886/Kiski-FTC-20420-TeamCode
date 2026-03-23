@@ -88,6 +88,8 @@ import java.util.concurrent.TimeUnit;
 
 @TeleOp(name="Omni Drive To AprilTag", group = "Concept")
 
+private long startTime;
+
 public class RobotAutoDriveToAprilTagOmni extends LinearOpMode
 {
     // Adjust these numbers to suit your robot.
@@ -154,7 +156,7 @@ public class RobotAutoDriveToAprilTagOmni extends LinearOpMode
         {
             targetFound = false;
             desiredTag  = null;
-
+            startTime = System.currentTimeMillis();
             // Step through the list of detected tags and look for a matching tag
             List<AprilTagDetection> currentDetections = aprilTag.getDetections();
             for (AprilTagDetection detection : currentDetections) {
@@ -188,26 +190,50 @@ public class RobotAutoDriveToAprilTagOmni extends LinearOpMode
             }
 
             // If Left Bumper is being pressed, AND we have found the desired target, Drive to target Automatically .
-            if (gamepad1.left_bumper && targetFound) {
+            double time = (System.currentTimeMillis() - startTime) / 1000.0;
 
-                // Determine heading, range and Yaw (tag image rotation) error so we can use them to control the robot automatically.
-                double  rangeError      = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
-                double  headingError    = desiredTag.ftcPose.bearing;
-                double  yawError        = desiredTag.ftcPose.yaw;
-
-                // Use the speed and turn "gains" to calculate how we want the robot to move.
-                drive  = Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
-                turn   = Range.clip(headingError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN) ;
-                strafe = Range.clip(-yawError * STRAFE_GAIN, -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
-
-                telemetry.addData("Auto","Drive %5.2f, Strafe %5.2f, Turn %5.2f ", drive, strafe, turn);
+            if (time <= 10) {
+                // =========================
+                // PHASE 1: SHRINKING SPIRAL
+                // =========================
+            
+                double R_start = 1.5;
+                double R_end = 0.7;
+            
+                double R = R_start - (R_start - R_end) * (time / 10.0);
+            
+                double omega = 1.5; // angular speed (rad/s)
+            
+                drive  = 0.3;                  // forward speed
+                strafe = R * omega * 0.2;      // circular motion
+                turn   = omega * 0.1;          // slight rotation
+            
             } else {
-
-                // drive using manual POV Joystick mode.  Slow things down to make the robot more controlable.
-                drive  = -gamepad1.left_stick_y  / 2.0;  // Reduce drive rate to 50%.
-                strafe = -gamepad1.left_stick_x  / 2.0;  // Reduce strafe rate to 50%.
-                turn   = -gamepad1.right_stick_x / 3.0;  // Reduce turn rate to 33%.
-                telemetry.addData("Manual","Drive %5.2f, Strafe %5.2f, Turn %5.2f ", drive, strafe, turn);
+                // =========================
+                // PHASE 2: STAR MOTION
+                // =========================
+            
+                double t = time - 10;
+            
+                int phase = ((int)(t / 1.0)) % 5;  // 5 directions
+            
+                switch (phase) {
+                    case 0:
+                        drive = 0.5; strafe = 0; turn = 0;
+                        break;
+                    case 1:
+                        drive = 0.2; strafe = 0.4; turn = 0;
+                        break;
+                    case 2:
+                        drive = -0.3; strafe = 0.3; turn = 0;
+                        break;
+                    case 3:
+                        drive = -0.3; strafe = -0.3; turn = 0;
+                        break;
+                    case 4:
+                        drive = 0.2; strafe = -0.4; turn = 0;
+                        break;
+                }
             }
             telemetry.update();
 
