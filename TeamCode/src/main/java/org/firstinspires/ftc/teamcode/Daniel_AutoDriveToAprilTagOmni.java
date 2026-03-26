@@ -192,54 +192,68 @@ public class RobotAutoDriveToAprilTagOmni extends LinearOpMode
             // If Left Bumper is being pressed, AND we have found the desired target, Drive to target Automatically .
             double time = (System.currentTimeMillis() - startTime) / 1000.0;
 
-            if (time <= 10) {
-                // =========================
-                // PHASE 1: SHRINKING SPIRAL
-                // =========================
+            // Stop everything first
+            drive = 0;
+            strafe = 0;
+            turn = 0;
             
-                double R_start = 1.5;
-                double R_end = 0.7;
+            // =========================
+            // PATH SEQUENCE
+            // =========================
             
-                double R = R_start - (R_start - R_end) * (time / 10.0);
+            // Adjust these times based on your robot speed!
+            // (Assume ~1 meter ≈ 1 second at 0.5 power — YOU MAY NEED TO TUNE)
             
-                double omega = 1.5; // angular speed (rad/s)
+            if (time < 4.0) {
+                // Move forward ~2 meters
+                drive = 0.5;
             
-                drive  = 0.3;                  // forward speed
-                strafe = R * omega * 0.2;      // circular motion
-                turn   = omega * 0.1;          // slight rotation
+            } else if (time < 5.5) {
+                // Turn LEFT 90°
+                turn = -0.5;
+            
+            } else if (time < 9.5) {
+                // Move forward ~2 meters
+                drive = 0.5;
+            
+            } else if (time < 11.0) {
+                // Turn RIGHT 90°
+                turn = 0.5;
+            
+            } else if (time < 13.0) {
+                // Move forward ~1 meter
+                drive = 0.5;
+            
+            } else if (time < 14.5) {
+                // Turn RIGHT 90°
+                turn = 0.5;
+            
+            } else if (time < 15.5) {
+                // Move forward ~0.5 meter
+                drive = 0.5;
+            
+            } else if (time < 16.5) {
+                // Turn RIGHT 30° (short turn)
+                turn = 0.3;
+            
+            } else if (time < 21.5) {
+                // Move forward ~2.5 meters
+                drive = 0.5;
+            
+            } else if (time < 24.5) {
+                // Turn RIGHT 120° (longer turn)
+                turn = 0.6;
+            
+            } else if (time < 30.5) {
+                // Move forward ~3 meters
+                drive = 0.5;
             
             } else {
-                // =========================
-                // PHASE 2: STAR MOTION
-                // =========================
-            
-                double t = time - 10;
-            
-                int phase = ((int)(t / 1.0)) % 5;  // 5 directions
-            
-                switch (phase) {
-                    case 0:
-                        drive = 0.5; strafe = 0; turn = 0;
-                        break;
-                    case 1:
-                        drive = 0.2; strafe = 0.4; turn = 0;
-                        break;
-                    case 2:
-                        drive = -0.3; strafe = 0.3; turn = 0;
-                        break;
-                    case 3:
-                        drive = -0.3; strafe = -0.3; turn = 0;
-                        break;
-                    case 4:
-                        drive = 0.2; strafe = -0.4; turn = 0;
-                        break;
-                }
+                // STOP
+                drive = 0;
+                strafe = 0;
+                turn = 0;
             }
-            telemetry.update();
-
-            // Apply desired axes motions to the drivetrain.
-            moveRobot(drive, strafe, turn);
-            sleep(10);
         }
     }
 
