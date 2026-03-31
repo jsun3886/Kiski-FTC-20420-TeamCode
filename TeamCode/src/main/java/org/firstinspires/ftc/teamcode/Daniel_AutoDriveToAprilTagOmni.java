@@ -116,7 +116,9 @@ public class RobotAutoDriveToAprilTagOmni extends LinearOpMode
     private VisionPortal visionPortal;               // Used to manage the video source.
     private AprilTagProcessor aprilTag;              // Used for managing the AprilTag detection process.
     private AprilTagDetection desiredTag = null;     // Used to hold the data for a detected AprilTag
-
+    
+    private IMU imu=null;                            // To manifactory control the robot active a stanrdard multi target action
+    
     @Override public void runOpMode()
     {
         boolean targetFound     = false;    // Set to true when an AprilTag target is detected
@@ -142,6 +144,15 @@ public class RobotAutoDriveToAprilTagOmni extends LinearOpMode
         backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
+
+        // Retrieve the IMU from the hardware map
+        imu = hardwareMap.get(IMU.class, "imu");
+        // Adjust the orientation parameters to match your robot
+        IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
+                RevHubOrientationOnRobot.LogoFacingDirection.FORWARD,
+                RevHubOrientationOnRobot.UsbFacingDirection.UP));
+        // Without this, the REV Hub's orientation is assumed to be logo up / USB forward
+        imu.initialize(parameters);
 
         if (USE_WEBCAM)
             setManualExposure(6, 250);  // Use low exposure time to reduce motion blur
@@ -292,6 +303,15 @@ public class RobotAutoDriveToAprilTagOmni extends LinearOpMode
         backRightDrive.setPower(backRightPower);
     }
 
+    private void rotateleft90(double YawStart) {
+   
+        while(Math.abs(YawStart-imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES))<90){
+            mecanumDrive(0,0,-.2);
+          
+    
+            }
+        mecanumDrive(0,0,0);
+        }
     /**
      * Initialize the AprilTag processor.
      */
