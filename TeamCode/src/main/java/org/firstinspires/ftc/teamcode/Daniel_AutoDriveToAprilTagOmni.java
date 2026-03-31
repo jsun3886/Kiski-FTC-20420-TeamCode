@@ -86,7 +86,7 @@ import java.util.concurrent.TimeUnit;
  *
  */
 
-@TeleOp(name="Omni Drive To AprilTag", group = "Concept")
+@Autonomous(name="Omni Drive To AprilTag", group = "Concept")
 
 private long startTime;
 
