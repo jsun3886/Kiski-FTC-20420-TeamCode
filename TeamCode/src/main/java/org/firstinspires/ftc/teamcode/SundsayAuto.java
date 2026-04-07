@@ -36,12 +36,14 @@ import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
 
 import static java.lang.Math.abs;
 
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -72,9 +74,9 @@ import java.util.List;
  * main robot "loop," continuously checking for conditions that allow us to move to the next step.
  */
 
-@Autonomous(name="BlankAuto", group="StarterBot")
+@Autonomous(name="SundayAuto", group="TeacherBot")
 //@Disabled
-public class BlankAuto extends OpMode
+public class SundsayAuto extends OpMode
 {
 
     /*
@@ -110,8 +112,7 @@ public class BlankAuto extends OpMode
     private AprilTagProcessor aprilTag;
     private VisionPortal visionPortal;
     private static final boolean USE_WEBCAM = true;  // true for webcam, false for phone camera
-
-
+    private  IMU imu=null;
     /*
      * Here is our auto state machine enum. This captures each action we'd like to do in auto.
      */
@@ -119,11 +120,12 @@ public class BlankAuto extends OpMode
         LAUNCH,
         FORWARD,
         LEFT,
+        STRAFELEFT,
         RIGHT,
         BACKWARDS,
         ROTATELEFT,
         ROTATERIGHT,
-        COMPLETE;
+        COMPLETE, FORWARD2, ROTATELEFT2, TURN135;
     }
 
     private AutonomousState autonomousState;
@@ -139,7 +141,7 @@ public class BlankAuto extends OpMode
     /*
      * When we create the instance of our enum we can also assign a default state.
      */
-    private Alliance alliance = Alliance.RED;
+    private Alliance alliance = Alliance.BLUE;
 
     /*
      * This code runs ONCE when the driver hits INIT.
@@ -179,6 +181,15 @@ public class BlankAuto extends OpMode
         rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
+
+
+        imu = hardwareMap.get(IMU.class, "imu");
+        // Adjust the orientation parameters to match your robot
+        IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
+                RevHubOrientationOnRobot.LogoFacingDirection.FORWARD,
+                RevHubOrientationOnRobot.UsbFacingDirection.UP));
+        // Without this, the REV Hub's orientation is assumed to be logo up / USB forward
+        imu.initialize(parameters);
 
 
         /*
@@ -240,6 +251,7 @@ public class BlankAuto extends OpMode
     @Override
     public void start() {
         mainTimer.reset();
+        autonomousState=AutonomousState.FORWARD;
     }
 
     /*
@@ -262,14 +274,36 @@ public class BlankAuto extends OpMode
             case FORWARD:
                 mecanumDrive(.2,0,0);
                 if(mainTimer.milliseconds()>3000){
-                    autonomousState=AutonomousState.COMPLETE;
+                    autonomousState=AutonomousState.BACKWARDS;
+                    mecanumDrive(0,0,0);
                 }
                 break;
 
 
+            case BACKWARDS:
+                //code to to backwards for 1 seconmd goes here
+                mecanumDrive(-.2,0,0);
+                if (mainTimer.milliseconds()>4000){
+                    autonomousState=AutonomousState.COMPLETE;
+                    mecanumDrive(0,0,0);
+                }
+                break;
 
+            case FORWARD2:
+                mecanumDrive(1,0,0);
+                if (mainTimer.milliseconds()>5000){
+                    autonomousState=AutonomousState.ROTATELEFT2;
+                }
+                break;
 
-
+            case ROTATELEFT:
+                rotateleftDegrees(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES),90);
+                autonomousState=AutonomousState.COMPLETE;
+        break;
+            case TURN135:
+                rotateleftDegrees(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES),135);
+                autonomousState=AutonomousState.COMPLETE;
+                break;
             case LAUNCH:
 
                 break;
@@ -299,7 +333,15 @@ public class BlankAuto extends OpMode
     @Override
     public void stop() {
     }
+    private void rotateleftDegrees(double YawStart, double turnLength) {
 
+        while(Math.abs(YawStart-imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES))<turnLength){
+            mecanumDrive(0,0,-.2);
+
+
+        }
+        mecanumDrive(0,0,0);
+    }
     void mecanumDrive(double forward, double strafe, double rotate){
 
         /* the denominator is the largest motor power (absolute value) or 1

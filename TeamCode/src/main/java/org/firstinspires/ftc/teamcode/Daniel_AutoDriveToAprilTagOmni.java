@@ -29,6 +29,7 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -52,7 +53,7 @@ import java.util.concurrent.TimeUnit;
  * Omni Drive To AprilTag - Fixed Version
  */
 @Autonomous(name="Omni Drive To AprilTag", group = "Concept")
-public class RobotAutoDriveToAprilTagOmni extends LinearOpMode {
+public class Daniel_AutoDriveToAprilTagOmni extends LinearOpMode {
 
     // Adjustable constants
     final double DESIRED_DISTANCE = 50.0; // inches from target
@@ -176,9 +177,9 @@ public class RobotAutoDriveToAprilTagOmni extends LinearOpMode {
         backRightDrive = hardwareMap.get(DcMotor.class, "rightBack");
 
         // Set directions (adjust if needed)
-        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        frontLeftDrive.setDirection(DcMotor.Direction.FORWARD);
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
+        backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
         // Retrieve IMU

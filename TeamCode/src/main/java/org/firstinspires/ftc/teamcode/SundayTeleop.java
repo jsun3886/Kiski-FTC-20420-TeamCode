@@ -36,13 +36,12 @@ import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
 
 import static java.lang.Math.abs;
 
-import android.graphics.Color;
-
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
@@ -52,6 +51,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -134,6 +134,7 @@ public class SundayTeleop extends OpMode {
     double leftBackPower;
     double rightBackPower;
 
+    private IMU imu=null;
     private ElapsedTime gateTimer= new ElapsedTime();
     /*
      * Code to run ONCE when the driver hits INIT
@@ -154,7 +155,7 @@ public class SundayTeleop extends OpMode {
         launcher = hardwareMap.get(DcMotorEx.class, "launcher");
         Sorter = hardwareMap.get(DcMotor.class,"Sorter");
         OpenClose = hardwareMap.get(Servo.class, "OpenClose");
-        colorSensor = hardwareMap.get(NormalizedColorSensor.class,"Micheal");
+        colorSensor = hardwareMap.get(NormalizedColorSensor.class,"ColorSensor");
 
 
         /*
@@ -205,6 +206,16 @@ public class SundayTeleop extends OpMode {
          * Tell the driver that initialization is complete.
          */
         telemetry.addData("Status", "Initialized");
+        // Retrieve the IMU from the hardware map
+        imu = hardwareMap.get(IMU.class, "imu");
+        // Adjust the orientation parameters to match your robot
+        IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
+                RevHubOrientationOnRobot.LogoFacingDirection.FORWARD,
+                RevHubOrientationOnRobot.UsbFacingDirection.UP));
+        // Without this, the REV Hub's orientation is assumed to be logo up / USB forward
+       imu.initialize(parameters);
+
+
     }
 
     /*
@@ -275,7 +286,10 @@ public class SundayTeleop extends OpMode {
             //  launcher.setVelocity(STOP_SPEED);
         }
 
+    if (gamepad1.dpad_left){
 
+        rotateleft90(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
+    }
 
 
 
@@ -336,8 +350,33 @@ public class SundayTeleop extends OpMode {
         telemetry.addData("State", launchState);
         telemetry.addData("motorSpeed", launcher.getVelocity());
         telemetry.addData("green color",colors.green);
+        telemetry.addData("imu status", imu.toString());
+
+       // telemetry.addData("yaw",imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
+       // telemetry.addData("pitch",imu.getRobotYawPitchRollAngles().getPitch(AngleUnit.DEGREES));
+        //telemetry.addData("Roll",imu.getRobotYawPitchRollAngles().getRoll(AngleUnit.DEGREES));
         telemetryAprilTag();
-    }// end of loop method
+            }// end of loop method
+
+    private void rotateleft90(double YawStart) {
+
+            while(Math.abs(YawStart-imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES))<90){
+                mecanumDrive(0,0,-.2);
+
+
+            }
+            mecanumDrive(0,0,0);
+    }
+
+    private void rotateRightt90(double YawStart) {
+
+        while(Math.abs(YawStart-imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES))<90){
+            mecanumDrive(0,0,.2);
+
+
+        }
+        mecanumDrive(0,0,0);
+    }
 
     /*
      * Code to run ONCE after the driver hits STOP
