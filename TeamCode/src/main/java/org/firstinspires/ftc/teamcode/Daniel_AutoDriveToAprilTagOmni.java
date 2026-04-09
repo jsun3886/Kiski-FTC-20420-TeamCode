@@ -115,7 +115,7 @@ public class Daniel_AutoDriveToAprilTagOmni extends LinearOpMode {
             }
 
             // Time-based autonomous path (your original sequence)
-            double time = (System.currentTimeMillis() - startTime) / 10000.0;
+            double time = (System.currentTimeMillis() - startTime) / 1000000.0;
 
             double drive = 0;
             double strafe = 0;
