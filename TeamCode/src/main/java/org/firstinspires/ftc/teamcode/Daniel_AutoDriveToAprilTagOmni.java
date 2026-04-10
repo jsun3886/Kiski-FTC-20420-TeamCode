@@ -52,7 +52,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Omni Drive To AprilTag - Fixed Version
  */
-@Autonomous(name="Omni Drive To AprilTag", group = "Concept")
+@Autonomous(name="Daniel_AutoDriveToAprilTagOmni.java", group = "Concept")
 public class Daniel_AutoDriveToAprilTagOmni extends LinearOpMode {
 
     // Adjustable constants
