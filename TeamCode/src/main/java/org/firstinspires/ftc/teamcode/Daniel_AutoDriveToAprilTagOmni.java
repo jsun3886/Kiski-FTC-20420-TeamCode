@@ -124,25 +124,29 @@ public class Daniel_AutoDriveToAprilTagOmni extends LinearOpMode {
             if (time < 4.0) {
                 drive = 0.5;                    // forward
             } else if (time < 5.5) {
-                turn = 0.5;                    // turn left 90°
+                turn = 0.6;                    // turn left 90°
             } else if (time < 9.5) {
                 drive = 0.5;                    // forward
-            } else if (time < 11.0) {
-                turn = -0.5;                     // turn right 90°
-            } else if (time < 13.0) {
-                drive = 0.5;                    // forward
-            } else if (time < 14.5) {
-                turn = -0.5;                     // turn right 90°
-            } else if (time < 15.5) {
-                drive = 0.5;                    // forward
-            } else if (time < 16.5) {
-                turn = -0.3;                     // small right turn
-            } else if (time < 21.5) {
-                drive = 0.5;                    // forward
             } else if (time < 24.5) {
-                turn = -0.6;                     // bigger right turn
+                drive = 0;
+                strafe = 0;
+                turn = 0;
+            }else if (time < 26) {
+                turn = -0.6;                     // turn right 90° , 11.0
+            } else if (time < 28) {
+                drive = 0.5;                    // forward , 13.0
+            } else if (time < 29.5) {
+                turn = -0.6;                     // turn right 90° , 14.5
             } else if (time < 30.5) {
-                drive = 0.5;                    // forward
+                drive = 0.5;                    // forward, 15.5
+            } else if (time < 31.5) {
+                turn = -0.5;                     // small right turn , 16.5
+            } else if (time < 36.5) {
+                drive = 0.5;                    // forward , 21.5
+            } else if (time < 39.5) {
+                turn = -0.7;                     // bigger right turn , 24.5
+            } else if (time < 45) {
+                drive = 0.5;                    // forward , 30.5
             } else {
                 drive = 0;
                 strafe = 0;
