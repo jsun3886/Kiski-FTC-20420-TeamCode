@@ -140,7 +140,7 @@ public class Daniel_AutoDriveToAprilTagOmni extends LinearOpMode {
             } else if (time < 30.5) {
                 drive = 0.8;                    // forward, 15.5
             } else if (time < 31.5) {
-                turn = -0.52;                     // small right turn , 16.5
+                turn = -0.58;                     // small right turn , 16.5
             } else if (time < 36.5) {
                 drive = 0.8;                    // forward , 21.5
             } else if (time < 39.5) {
