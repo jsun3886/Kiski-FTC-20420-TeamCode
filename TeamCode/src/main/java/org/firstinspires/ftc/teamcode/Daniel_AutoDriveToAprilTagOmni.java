@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 @Autonomous(name = "Daniel_AutoDriveToAprilTagOmni", group = "Concept")
 public class Daniel_AutoDriveToAprilTagOmni extends LinearOpMode {
 
-    private static final boolean USE_WEBCAM  = true;
+    private static final boolean USE_WEBCAM    = true;
     private static final int    DESIRED_TAG_ID = -1; // -1 = any tag
 
     // Drive motors
@@ -29,7 +29,7 @@ public class Daniel_AutoDriveToAprilTagOmni extends LinearOpMode {
     private DcMotor backLeftDrive   = null;
     private DcMotor backRightDrive  = null;
 
-    // Launcher motor  ← add "launcher" to your robot config with this exact name
+    // Launcher motor  ← must be named "launcher" in your robot config
     private DcMotor launcher = null;
 
     // Vision
@@ -43,54 +43,114 @@ public class Daniel_AutoDriveToAprilTagOmni extends LinearOpMode {
 
         if (USE_WEBCAM) setManualExposure(6, 250);
 
-        telemetry.addData("Status", "Ready");
+        telemetry.addData("Status", "Ready — waiting for START");
         telemetry.update();
         waitForStart();
 
-        // ── Phase 1: Drive forward for 0.5 seconds ──────────────────────────
+        // ── Phase 1: Drive forward for 0.5 seconds ───────────────────────────
         moveRobot(0.5, 0, 0);
         sleep(500);
         moveRobot(0, 0, 0);
 
-        // ── Phase 2: Slow left turn for 2 seconds (less than 90°) ───────────
-        moveRobot(0, 0, 0.25); // small turn power → stays well under 90°
-        sleep(2000);
-        moveRobot(0, 0, 0);
+        // ── Phase 2: Slow left turn — stop immediately on target detect ───────
+        boolean targetDetected = scanAndTurn();
 
-        // ── Phase 3: Scan for AprilTag and fire if found ─────────────────────
-        boolean firedAlready = false;
+        // ── Phase 3: If target was found, spin up and launch indefinitely ─────
+        if (targetDetected) {
+            launchBall();
+        }
+    }
 
-        while (opModeIsActive() && !firedAlready) {
-            List<AprilTagDetection> detections = aprilTag.getDetections();
+    /**
+     * Slowly turns left for up to 2 seconds.
+     * Polls the AprilTag sensor every loop — the moment a target is seen,
+     * it stops turning, rumbles the gamepad, and returns true.
+     *
+     * @return true if a target was found, false if the turn timed out
+     */
+    private boolean scanAndTurn() {
+        long turnStart = System.currentTimeMillis();
+        final long TURN_DURATION_MS = 2000;
 
-            for (AprilTagDetection d : detections) {
-                if (d.metadata != null &&
-                    (DESIRED_TAG_ID < 0 || d.id == DESIRED_TAG_ID)) {
+        while (opModeIsActive()) {
+            long elapsed = System.currentTimeMillis() - turnStart;
 
-                    // Target found — fire launcher at full power
-                    launcher.setPower(1.0);
-                    sleep(1500);          // run launcher long enough to release the ball
-                    launcher.setPower(0);
-                    firedAlready = true;
+            // ── Check for target ──────────────────────────────────────────────
+            AprilTagDetection found = getTarget();
 
-                    telemetry.addData("Target", "FOUND — ID %d", d.id);
-                    telemetry.addData("Launcher", "FIRED");
-                    telemetry.update();
-                    break;
-                }
-            }
+            if (found != null) {
+                // Stop turning immediately
+                moveRobot(0, 0, 0);
 
-            if (!firedAlready) {
-                telemetry.addData("Target", "Searching...");
+                // ── Notify driver via gamepad rumble and telemetry ────────────
+                gamepad1.rumble(1.0, 1.0, 500);   // both motors, 500 ms buzz
+                gamepad2.rumble(1.0, 1.0, 500);
+
+                telemetry.addLine("!! TARGET ACQUIRED !!");
+                telemetry.addData("AprilTag ID",  found.id);
+                telemetry.addData("Range",    "%.1f in", found.ftcPose.range);
+                telemetry.addData("Bearing",  "%.1f deg", found.ftcPose.bearing);
+                telemetry.addData("Launcher", "SPINNING UP...");
                 telemetry.update();
+
+                return true; // hand off to launchBall()
             }
+
+            // ── Still turning left ────────────────────────────────────────────
+            if (elapsed >= TURN_DURATION_MS) {
+                moveRobot(0, 0, 0);
+                telemetry.addData("Turn", "Complete — no target found");
+                telemetry.update();
+                return false;
+            }
+
+            moveRobot(0, 0, 0.25); // slow left turn
+
+            telemetry.addData("Turning left", "%.1f s remaining",
+                    (TURN_DURATION_MS - elapsed) / 1000.0);
+            telemetry.addData("Target", "Searching...");
+            telemetry.update();
         }
 
-        // Stop all motion when done
+        moveRobot(0, 0, 0);
+        return false;
+    }
+
+    /**
+     * Spins up the launcher to maximum power and keeps it running
+     * until the OpMode ends. Telemetry updates continuously.
+     */
+    private void launchBall() {
+        launcher.setPower(1.0); // maximum speed — runs indefinitely
+
+        while (opModeIsActive()) {
+            telemetry.addLine("!! LAUNCHING !!");
+            telemetry.addData("Launcher Power", "100%  (MAX)");
+            telemetry.addData("Status", "Running until OpMode ends");
+            telemetry.update();
+        }
+
+        // OpMode ending — safe shutdown
+        launcher.setPower(0);
         moveRobot(0, 0, 0);
     }
 
-    // ── Hardware init ────────────────────────────────────────────────────────
+    /**
+     * Checks the current AprilTag detections and returns the first
+     * matching target, or null if none is visible.
+     */
+    private AprilTagDetection getTarget() {
+        List<AprilTagDetection> detections = aprilTag.getDetections();
+        for (AprilTagDetection d : detections) {
+            if (d.metadata != null &&
+                (DESIRED_TAG_ID < 0 || d.id == DESIRED_TAG_ID)) {
+                return d;
+            }
+        }
+        return null;
+    }
+
+    // ── Hardware init ─────────────────────────────────────────────────────────
 
     private void initHardware() {
         frontLeftDrive  = hardwareMap.get(DcMotor.class, "leftFront");
@@ -107,8 +167,7 @@ public class Daniel_AutoDriveToAprilTagOmni extends LinearOpMode {
         launcher.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
     }
 
-    // ── Mecanum drive helper ─────────────────────────────────────────────────
-    // x = forward/back, y = strafe left/right, yaw = rotation
+    // ── Mecanum drive helper ──────────────────────────────────────────────────
 
     public void moveRobot(double x, double y, double yaw) {
         double fl = x - y - yaw;
@@ -126,7 +185,7 @@ public class Daniel_AutoDriveToAprilTagOmni extends LinearOpMode {
         backRightDrive .setPower(br);
     }
 
-    // ── Vision init ──────────────────────────────────────────────────────────
+    // ── Vision init ───────────────────────────────────────────────────────────
 
     private void initAprilTag() {
         aprilTag = new AprilTagProcessor.Builder().build();
